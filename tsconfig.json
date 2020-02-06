@@ -1,0 +1,34 @@
+{
+  "bazelOpts": {
+    "es5Mode": true,
+    "devmodeTargetOverride": "es2017"
+  },
+  "compilerOptions": {
+    "module": "esnext",
+    "target": "es2017",
+    "diagnostics": false,
+    "inlineSourceMap": false,
+    "inlineSources": false,
+    "sourceMap": true,
+    "moduleResolution": "node",
+    "stripInternal": true,
+    "strictNullChecks": true,
+    "pretty": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
+    "emitDecoratorMetadata": true,
+    "jsx": "react",
+    "plugins": [
+      {
+        "name": "tslint-language-service"
+      }
+    ],
+    "baseUrl": ".",
+    "lib": ["es2017", "dom", "esnext.asynciterable", "esnext"],
+  },
+  "exclude": ["node_modules", "bazel-*", "**/node_modules/*"]
+}

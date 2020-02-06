@@ -1,0 +1,12 @@
+
+.env
+dist
+bazel-out
+**/node_modules
+yarn-error.log
+**/package-lock.json
+**/.DS_Store
+current.txt
+failed.txt
+log.txt
+mapped.txt
