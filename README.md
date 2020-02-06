@@ -22,7 +22,7 @@ bazel run migration:migrate-scenes  \
 	{PATH TO THE FILE WITH CREDENTIALS} \
 	{URL OF THE V2 CONTENT SERVER} \
 	[PATH TO A DIR WHERE LOGS WILL BE SAVED] (OPTIONAL) \
-    [PATH TO A DIR WITH DEFAULT SCENES] (OPTIONAL)
+	[PATH TO A DIR WITH DEFAULT SCENES] (OPTIONAL)
 ```
 
 The script will read the V2 server, check if the scene has already been deployed, and deploy it on the V3 server.
