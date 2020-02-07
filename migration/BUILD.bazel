@@ -6,6 +6,7 @@ load("@build_bazel_rules_nodejs//:defs.bzl", "nodejs_binary")
 nodejs_binary(
     name = "migrate-scenes",
     data = [
+        "resources",
         "migration",
         "@npm//@bazel/typescript",
         "@npm//typescript",
@@ -16,11 +17,22 @@ nodejs_binary(
 nodejs_binary(
     name = "migrate-profiles",
     data = [
+        "resources",
         "migration",
         "@npm//@bazel/typescript",
         "@npm//typescript",
     ],
     entry_point = "migrate-profiles.ts",
+)
+
+
+filegroup(
+    name = "resources",
+    srcs = glob(
+        [
+            "resources/**/*",
+        ],
+    ),
 )
 
 
@@ -46,6 +58,8 @@ ts_library(
         "@npm//csvtojson",
         "@npm//@types/csvtojson",
         "@npm//glob",
-        "@npm//@types/glob"
+        "@npm//@types/glob",
+        "@npm//argparse",
+        "@npm//@types/argparse"
     ],
 )

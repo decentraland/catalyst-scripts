@@ -7,15 +7,13 @@ import asyncPool from "tiny-async-pool"
 import { Hashing, FileHash } from "./Hashing"
 import { Authenticator } from "./Authenticator"
 
-export const GLOBAL = { identityFilePath: "", outputDir: "" }
-const LOG_PATH = () => GLOBAL.outputDir + "/log.txt"
-const FAILED_PATH = () => GLOBAL.outputDir + "/failed.txt"
-const CURRENT_PATH = () => GLOBAL.outputDir + "/current.txt"
-const CONCURRENT_WORKERS = 15
-const RETRIES = 5
+export const GLOBAL = { identityFilePath: "", outputDir: "", retries: 5, concurrency: 15 }
+const LOG_PATH = () => GLOBAL.outputDir + "log.txt"
+const FAILED_PATH = () => GLOBAL.outputDir + "failed.txt"
+const CURRENT_PATH = () => GLOBAL.outputDir + "current.txt"
 
 
-let identity
+let identity: { ethAddress: string, privateKey: string }
 
 function getIdentity(): { ethAddress: string, privateKey: string } {
     if (!identity) {
@@ -49,17 +47,16 @@ export async function deploy(serverAddress: string, previousId: string, deployDa
     form.append('version'   , "v2")
     form.append('migration_data', JSON.stringify(deployData.migrationData))
 
-    let totalSize = 0
     filesToUpload.forEach(f => {
-        totalSize += f.content.byteLength
         form.append(f.name, f.content, {
             filename: f.name,
         });
     })
-    const totalSizeMegas = totalSize / 1024 / 1024
+
+    const size = (form.getLengthSync() / 1024 / 1024).toFixed(2)
 
     // Deploy the data
-    await log(`Deploying ${previousId}. Size is ${totalSizeMegas.toFixed(2)} MB. New id is ${deployData.entityId}`)
+    await log(`Deploying ${previousId}. Size is ${size} MB. New id is ${deployData.entityId}`)
     await executeWithRetries(async () => {
         const deployResponse = await fetch(`${serverAddress}/legacy-entities`, { method: 'POST', body: form })
         if (!deployResponse.ok) {
@@ -93,7 +90,7 @@ export async function deployDefault(serverAddress: string, entityId: string, fil
 }
 
 export async function executeWithRetries<T>(executor: () => Promise<T>, errorMessage: string): Promise<T> {
-    let retries = RETRIES
+    let retries = GLOBAL.retries
     while(retries > 0) {
         try {
             return await executor()
@@ -130,7 +127,7 @@ export async function executeWithProgressBar<T, K>(detail: string, array: Array<
     const bar = new cliProgress.SingleBar({format: `${detail}: [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}`});
     bar.start(array.length, 0);
 
-    const result = await asyncPool(CONCURRENT_WORKERS, array, async (value) => {
+    const result = await asyncPool(GLOBAL.concurrency, array, async (value) => {
         const result: K = await iterator(value)
         bar.increment(1)
         return result

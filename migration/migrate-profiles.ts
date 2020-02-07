@@ -1,30 +1,35 @@
+import { ArgumentParser } from "argparse"
 import csv from "csvtojson"
 import { Hashing, FileHash } from "./utils/Hashing"
 import { deploy, executeWithProgressBar, log, buildEntityFile, fetchJson, clearLogFiles, ContentFile, downloadFile, failed, DeployData, GLOBAL } from './utils/Helper';
 
-async function run(argv: string[]) {
-    if (argv.length < 3 || argv.length > 4) {
-        console.log("Welcome to the scene migrator!!!")
-        console.log("Usage:")
-        console.log("bazel run content:migrate-profiles {SERVER_ADDRESS} {IDENTITY_FILE_PATH} {CSV_FILE} [OUTPUT_DIR]")
-    } else {
-        const serverAddress = argv[0]
-        const identityFilePath = argv[1]
-        const csvPath = argv[2]
-        const outputDir = argv[3] ?? ""
+const CSV_PATH = 'migration/resources/profiles.csv'
 
-        // Set global vars
-        GLOBAL.identityFilePath = identityFilePath
-        GLOBAL.outputDir = outputDir
+async function run() {
+    const parser = new ArgumentParser({ addHelp: true });
+    parser.addArgument('serverAddress', { help: 'The address of the server where the profiles will be deployed'});
+    parser.addArgument('identityFilePath', { help: 'The path to the json file where the address and private key are, to use for deployment'});
+    parser.addArgument(['-o', '--output'], { help: 'The path to directory where logs will be stored', defaultValue: ""});
+    parser.addArgument(['--retries'], { help: 'Number of retries when an action fails', type: 'int', defaultValue: 5 });
+    parser.addArgument(['--concurrency'], { help: 'Number of workers that will execute concurrently', type: 'int', defaultValue: 15 });
+    parser.addArgument(['--profiles'], { help: 'Specific profiles to migrate', metavar: 'N', nargs: '+' });
 
-        const json = await csv().fromFile(csvPath)
-        const nonGuest = json.filter(json => !!json['eth_address']);
-        console.log(`${json.length - nonGuest.length} guest profiles ignored`)
+    const args = parser.parseArgs();
 
-        clearLogFiles()
-        await log("Starting profiles migration")
-        await migrateToV3(nonGuest, serverAddress);
-    }
+    // Set global vars
+    GLOBAL.identityFilePath = args.identityFilePath
+    GLOBAL.outputDir = args.output.endsWith("/") ? args.output : (args.output !== "" ? args.output + '/' : "")
+    GLOBAL.retries = args.retries
+    GLOBAL.concurrency = args.concurrency
+
+    const json = await csv().fromFile(CSV_PATH)
+    const nonGuest = json.filter(json => !!json['eth_address'])
+    console.log(`${json.length - nonGuest.length} guest profiles ignored`)
+    const specific = nonGuest.filter(json => !args.profiles || args.profiles.includes(json['eth_address']))
+
+    clearLogFiles()
+    await log("Starting profiles migration")
+    await migrateToV3(specific, args.serverAddress);
 }
 
 async function migrateToV3(json: any[], serverAddress: string) {
@@ -156,4 +161,4 @@ type Avatar = {
     wearables: any,
 }
 
-run(process.argv.slice(2)).then(() => console.log("Done!"))
+run().then(() => console.log("Done!"))

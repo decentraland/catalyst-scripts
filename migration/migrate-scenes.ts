@@ -1,8 +1,9 @@
-
+import { ArgumentParser } from "argparse"
 import fs from "fs"
 import { Hashing, FileHash } from "./utils/Hashing"
 import { deploy, executeWithProgressBar, log, buildEntityFile, fetchJson, DeployData, ContentFile, failed, downloadFile, clearLogFiles, shuffleArray, current, deployDefault, GLOBAL } from './utils/Helper';
 
+const DEFAULT_SCENES_DIR = 'migration/resources/DefaultScenes'
 const FROM_X: number = -150
 const TO_X: number = 150
 const FROM_Y: number = -150
@@ -11,34 +12,36 @@ const TO_Y: number = 150
 const toMigrate: Set<string> = new Set()
 let sentContent: Map<string, FileHash> = new Map()
 
-async function run(argv: string[]) {
-    if (argv.length < 3 || argv.length > 5) {
-        console.log("Welcome to the scene migrator!!!")
-        console.log("Usage:")
-        console.log("bazel run content:migrate-scenes {SERVER_ADDRESS} {IDENTITY_FILE_PATH} {V2_SERVER_ADDRESS} [OUTPUT_DIR] [DEFAULT_SCENES_DIR]")
-    } else {
-        const interval = setInterval(async () => { await current(toMigrate) }, 10000)
-        const serverAddress = argv[0]
-        const identityFilePath = argv[1]
-        const v2ServerAddress = argv[2]
-        const outputDir = argv[3] ?? ""
-        const defaultScenesDir = argv[4]
+async function run() {
 
-        // Set global vars
-        GLOBAL.identityFilePath = identityFilePath
-        GLOBAL.outputDir = outputDir
+    const parser = new ArgumentParser({ addHelp: true });
+    parser.addArgument('serverAddress', { help: 'The address of the server where the profiles will be deployed'});
+    parser.addArgument('identityFilePath', { help: 'The path to the json file where the address and private key are, to use for deployment'});
+    parser.addArgument('sourceServer', { help: 'URL of the server to copy entities from'});
+    parser.addArgument(['-o', '--output'], { help: 'The path to directory where logs will be stored', defaultValue: ""});
+    parser.addArgument(['--retries'], { help: 'Number of retries when an action fails', type: 'int', defaultValue: 5 });
+    parser.addArgument(['--concurrency'], { help: 'Number of workers that will execute concurrently', type: 'int', defaultValue: 15 });
+    parser.addArgument(['--scenes'], { help: 'Specific scenes to migrate', metavar: 'N', nargs: '+' });
 
-        clearLogFiles()
-        await log("Starting scene migration")
-        if (defaultScenesDir) {
-           await migrateDefault(defaultScenesDir, identityFilePath, serverAddress)
-        }
-        const allScenes: Map<RootCid, Set<Parcel>> = await getAllScenes(v2ServerAddress)
-        for (const scene of allScenes.keys()) toMigrate.add(scene)
-        await fetchAndMigrateToV3(v2ServerAddress, allScenes, serverAddress);
-        fs.writeFileSync(outputDir + "/mapped.txt", Buffer.from(JSON.stringify(Array.from(sentContent.entries()))))
-        clearInterval(interval)
-    }
+    const args = parser.parseArgs();
+
+    // Set global vars
+    GLOBAL.identityFilePath = args.identityFilePath
+    GLOBAL.outputDir = args.output.endsWith("/") ? args.output : (args.output !== "" ? args.output + '/' : "")
+    GLOBAL.retries = args.retries
+    GLOBAL.concurrency = args.concurrency
+
+    clearLogFiles()
+    await log("Starting scene migration")
+    await migrateDefault(args.serverAddress)
+
+    const allScenes: Map<RootCid, Set<Parcel>> = await getAllScenes(args.sourceServer)
+    const scenes = new Map(Array.from(allScenes.entries()).filter(([rootCid]) => !args.scenes || args.scenes.includes(rootCid)))
+    for (const scene of scenes.keys()) toMigrate.add(scene)
+    const interval = setInterval(async () => { await current(toMigrate) }, 10000)
+    await fetchAndMigrateToV3(args.sourceServer, scenes, args.serverAddress);
+    fs.writeFileSync(GLOBAL.outputDir + "mapped.txt", Buffer.from(JSON.stringify(Array.from(sentContent.entries()))))
+    clearInterval(interval)
 }
 
 async function fetchAndMigrateToV3(v2ServerAddress: string, allScenes: Map<string, Set<string>>, serverAddress: string) {
@@ -66,26 +69,32 @@ async function fetchAndMigrateToV3(v2ServerAddress: string, allScenes: Map<strin
     });
 }
 
-async function migrateDefault(defaultScenesDir: string, identityFilePath: string, serverAddress: string) {
-    const sceneFolders = fs.readdirSync(defaultScenesDir).filter(file => !file.includes("DS_Store"))
+async function migrateDefault(serverAddress: string) {
+    const sceneFolders = fs.readdirSync(DEFAULT_SCENES_DIR).filter(file => !file.includes("DS_Store"))
 
     for (const sceneFolder of sceneFolders) {
-        const contentFiles: Map<string, Buffer> = new Map(fs.readdirSync(`${defaultScenesDir}/${sceneFolder}`)
-            .filter(file => !file.includes("DS_Store"))
-            .map(fileName => [fileName, fs.readFileSync(`${defaultScenesDir}/${sceneFolder}/${fileName}`)]))
+        const entities: EntitiesResponse = await fetchJson(serverAddress, `/entities/scenes?pointer=${sceneFolder}`);
 
-        // Update the timestamp
-        const entityFile = contentFiles.get("entity.json") as Buffer
-        const entityJson = JSON.parse(entityFile.toString())
-        entityJson.timestamp = Date.now()
-        const entityBuffer = Buffer.from(JSON.stringify(entityJson))
-        contentFiles.set("entity.json", entityBuffer)
+        if (entities.length > 0) {
+            await log(`${sceneFolder} already deployed`)
+        } else {
+            const contentFiles: Map<string, Buffer> = new Map(fs.readdirSync(`${DEFAULT_SCENES_DIR}/${sceneFolder}`)
+                .filter(file => !file.includes("DS_Store"))
+                .map(fileName => [fileName, fs.readFileSync(`${DEFAULT_SCENES_DIR}/${sceneFolder}/${fileName}`)]))
 
-        // Generate entityId
-        const entityId = await Hashing.calculateBufferHash(entityBuffer)
+            // Update the timestamp
+            const entityFile = contentFiles.get("entity.json") as Buffer
+            const entityJson = JSON.parse(entityFile.toString())
+            entityJson.timestamp = Date.now()
+            const entityBuffer = Buffer.from(JSON.stringify(entityJson))
+            contentFiles.set("entity.json", entityBuffer)
 
-        await deployDefault(serverAddress, entityId, contentFiles)
-        await log(`Deployed default ${entityId}`)
+            // Generate entityId
+            const entityId = await Hashing.calculateBufferHash(entityBuffer)
+
+            await deployDefault(serverAddress, entityId, contentFiles)
+            await log(`Deployed default ${entityId}`)
+        }
     }
 }
 
@@ -267,4 +276,4 @@ type ScenesResponse = {
     }[]
 }
 
-run(process.argv.slice(2)).then(() => console.log("Done!"))
+run().then(() => console.log("Done!"))
