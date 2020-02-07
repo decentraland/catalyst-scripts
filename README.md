@@ -1,6 +1,6 @@
 # Content Migrator
 
-This project can migrate content from V2 to V3 format.
+This project ahs the ability to migrate content from V2 to V3 format.
 
 
 ## Set up
