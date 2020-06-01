@@ -66,6 +66,16 @@ nodejs_binary(
     entry_point = "fix.ts",
 )
 
+nodejs_binary(
+    name = "blacklist",
+    data = [
+        "tools",
+        "@npm//@bazel/typescript",
+        "@npm//typescript",
+    ],
+    entry_point = "blacklist.ts",
+)
+
 
 ts_library(
     name = "tools",
