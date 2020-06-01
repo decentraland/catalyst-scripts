@@ -18,15 +18,15 @@ const knownOverwrittenEntities: Set<EntityId> = new Set()
 
 
 const ignore =[
-    "QmSSumFVwCt9j4SoMdZzwW9R7iz2SyWra2afvgMrtseRfP",
-    "QmeNR9gLxVWtKKHpBpBaJfwa3CzmDTi1MENU6TfR5Nqahm",
-    "QmdYzpHAGocBMZ7wt2yEVk64tLdWGh2P7XjBNTXLZMeya4",
-    "QmboapccQtWkHDiXpEC37xTm5QrmsKeED5npQ1n1tMNFag",
-    "Qmey78Akfn65Wyw9HgJXQrTF8QXFGwsP5aLkk3rHdid4cC",
-    "QmR82yTDLHq8yeJyHLRUuCMUTLzHNfytu9J9cNruRYLKsi",
-    "Qmf44utJg96g4iXdf5pRtsgwKQ1G1nZsCfUCNE8CvQVGGs",
-    "QmRG5p4cWx9xsXvqtvpD18LdtdpFXStKJeRms247PJb7zS",
-    "QmNTpz3bMg8oWw8rByATQraeRdQdzxQV2VBKkzDWZY6aTG",
+    "QmNn2oVpyXxNzhM8nZa4jsUu76e8EXbYDs7NaPjb8aFuxj",
+    "QmbTsE4NJ1Mg82YF2xVbfkFRWkxzSJfVFgQw5eiaGNk3TH",
+    "QmPJ4Ct9A3a2tVB1Cse56xxUa4MmfvLQntLeNbcvLmZgMc",
+    "Qmd7fJe4qWMfzXjgqX65GPa6tDfhMuGP2npyf1brtrUPv5",
+    "QmeCfwXhvXyuXcWx9eM3FCkdd5PxQ3shZtmnhWaWsAeeft",
+    "QmRUp4RoTa32PLj4VC5bwfmwDc3SMBVUdsk6rzKpPLzgzf",
+    "QmcvfmuW3n29pXzYNobH4FiXKBycjA79wV49JtAr8At619",
+    "QmYE3oq6J59J3hEnNWYds5dn1BXa3uMFFroMTN7ZaRFVKt",
+    "QmRmN36qtANL8M7x7s69ndyMe3oWKk9bViePJJNp3SKS8f",
 ]
 
 
@@ -390,8 +390,7 @@ function areHistoriesTheSame(history1: DeploymentEvent[], history2: DeploymentEv
     for (let i = 0; i < history1.length; i++) {
         const { serverName: serverName1, entityType: entityType1, entityId: entityId1, timestamp: timestamp1} = history1[i]
         const { serverName: serverName2, entityType: entityType2, entityId: entityId2, timestamp: timestamp2} = history2[i]
-        if ((serverName1 !== serverName2 && serverName2 !== 'UNKNOWN_NAME' && serverName1 !== 'UNKNOWN_NAME') ||
-            entityType1 !== entityType2 ||
+        if (entityType1 !== entityType2 ||
             entityId1 !== entityId2 ||
             timestamp1 !== timestamp2) {
                 console.log("FOUND")

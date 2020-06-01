@@ -1,4 +1,5 @@
-import { ServerAddress, Identity, Pointer, EntityType, EntityId, FileHash } from "./common/types";
+import fetch from "node-fetch"
+import { ServerAddress, Identity } from "./common/types";
 import { clearLogFiles, getIdentity } from "./common/IO";
 import { hash, sign } from 'eth-crypto'
 import { getGlobalArgParser } from "./common/Global";
