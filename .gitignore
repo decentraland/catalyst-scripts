@@ -6,7 +6,6 @@ bazel-out
 yarn-error.log
 **/package-lock.json
 **/.DS_Store
-current.txt
-failed.txt
-log.txt
-mapped.txt
+**/log.txt
+**/failed.txt
+**/results.txt

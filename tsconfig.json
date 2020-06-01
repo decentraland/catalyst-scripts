@@ -29,6 +29,9 @@
     ],
     "baseUrl": ".",
     "lib": ["es2017", "dom", "esnext.asynciterable", "esnext"],
+    "paths": {
+        "decentraland-katalyst-contracts/*": ["contracts/*"],
+    }
   },
   "exclude": ["node_modules", "bazel-*", "**/node_modules/*"]
 }

@@ -1,0 +1,91 @@
+package(default_visibility = ["//visibility:public"])
+
+load("@npm_bazel_typescript//:index.bzl", "ts_library")
+load("@build_bazel_rules_nodejs//:defs.bzl", "nodejs_binary")
+
+nodejs_binary(
+    name = "check",
+    data = [
+        "tools",
+        "@npm//@bazel/typescript",
+        "@npm//typescript",
+    ],
+    entry_point = "check.ts",
+)
+
+nodejs_binary(
+    name = "find-content",
+    data = [
+        "tools",
+        "@npm//@bazel/typescript",
+        "@npm//typescript",
+    ],
+    entry_point = "find-content.ts",
+)
+
+nodejs_binary(
+    name = "deploy-specific",
+    data = [
+        "tools",
+        "@npm//@bazel/typescript",
+        "@npm//typescript",
+    ],
+    entry_point = "deploy-specific.ts",
+)
+
+nodejs_binary(
+    name = "download-history",
+    data = [
+        "tools",
+        "@npm//@bazel/typescript",
+        "@npm//typescript",
+    ],
+    entry_point = "download-history.ts",
+)
+
+
+
+nodejs_binary(
+    name = "compare-history",
+    data = [
+        "tools",
+        "@npm//@bazel/typescript",
+        "@npm//typescript",
+    ],
+    entry_point = "compare-history.ts",
+)
+
+
+nodejs_binary(
+    name = "fix",
+    data = [
+        "tools",
+        "@npm//@bazel/typescript",
+        "@npm//typescript",
+    ],
+    entry_point = "fix.ts",
+)
+
+
+ts_library(
+    name = "tools",
+    srcs = glob(["**/*.ts"]),
+    deps = [
+        "//contracts",
+        "@npm//@types",
+        "@npm//@types/node",
+        "@npm//node-fetch",
+        "@npm//@types/node-fetch",
+        "@npm//form-data",
+        "@npm//@types/form-data",
+        "@npm//tiny-async-pool",
+        "@npm//@types/tiny-async-pool",
+        "@npm//cli-progress",
+        "@npm//@types/cli-progress",
+        "@npm//argparse",
+        "@npm//@types/argparse",
+        "@npm//ms",
+        "@npm//@types/ms",
+        "@npm//eth-crypto"
+    ],
+)
