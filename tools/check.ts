@@ -388,18 +388,33 @@ function areHistoriesTheSame(history1: DeploymentEvent[], history2: DeploymentEv
         return false
     }
     for (let i = 0; i < history1.length; i++) {
-        const { serverName: serverName1, entityType: entityType1, entityId: entityId1, timestamp: timestamp1} = history1[i]
-        const { serverName: serverName2, entityType: entityType2, entityId: entityId2, timestamp: timestamp2} = history2[i]
-        if (entityType1 !== entityType2 ||
-            entityId1 !== entityId2 ||
-            timestamp1 !== timestamp2) {
-                console.log("FOUND")
-                console.log(history1[i])
-                console.log("EXPECTED")
-                console.log(history2[i])
+        if (!areEventsTheSame(history1[i], history2[i])) {
+            console.log("FOUND")
+            console.log(history1[i])
+            console.log("EXPECTED")
+            console.log(history2[i])
+            if (history1[i].timestamp === history2[i].timestamp) {
+                const areSwitched = areEventsTheSame(history1[i], history2[i + 1]) && areEventsTheSame(history1[i + 1], history2[i])
+                if (areSwitched) {
+                    i++
+                } else {
+                    return false
+                }
+            } else {
                 return false
+            }
         }
     }
     return true
+}
+
+function areEventsTheSame(event1: DeploymentEvent, event2: DeploymentEvent) {
+    const fallbackNames = ['UNKNOWN_NAME', '02c7e319-3fd7-4bf4-9764-b7bf1feea490']
+    const { serverName: serverName1, entityType: entityType1, entityId: entityId1, timestamp: timestamp1} = event1
+    const { serverName: serverName2, entityType: entityType2, entityId: entityId2, timestamp: timestamp2} = event2
+    return (serverName1 === serverName2 || fallbackNames.includes(serverName1) || fallbackNames.includes(serverName2)) &&
+            entityType1 === entityType2 &&
+            entityId1 === entityId2 &&
+            timestamp1 === timestamp2
 }
 
