@@ -76,6 +76,15 @@ nodejs_binary(
     entry_point = "blacklist.ts",
 )
 
+nodejs_binary(
+    name = "asset-bundle-analysis",
+    data = [
+        "tools",
+        "@npm//@bazel/typescript",
+        "@npm//typescript",
+    ],
+    entry_point = "asset-bundle-analysis.ts",
+)
 
 ts_library(
     name = "tools",
@@ -96,6 +105,7 @@ ts_library(
         "@npm//@types/argparse",
         "@npm//ms",
         "@npm//@types/ms",
-        "@npm//eth-crypto"
+        "@npm//eth-crypto",
+        "@npm//aws-sdk",
     ],
 )
