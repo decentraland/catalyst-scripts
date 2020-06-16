@@ -163,7 +163,7 @@ function getPartialHistory(serverAddress: ServerAddress, offset: number, to: num
     return fetchJson(serverAddress, `/history?offset=${offset}&to=${to}`)
 }
 
-async function fetchJson(serverAddress: string, path: string, retries?: number): Promise<any> {
+export async function fetchJson(serverAddress: string, path: string, retries?: number): Promise<any> {
     const url = `${serverAddress}${path}`
     return executeWithRetries(async () => {
         const response = await fetch(url)
