@@ -38,7 +38,7 @@ async function runCheck(serverAddresses: ServerAddress[]) {
         return;
     }
 
-    console.log(`The following servers have failures: ${Array.from(serversWithFailures.keys())}`)
+    console.log(`The following servers have failures:\n${Array.from(serversWithFailures.keys()).join('\n')}`)
 
     let totalFixed = 0
     let total = 0
@@ -50,8 +50,8 @@ async function runCheck(serverAddresses: ServerAddress[]) {
         otherServers.splice(otherServers.indexOf(server), 1)
 
         await executeWithProgressBar(`Fixing server ${server}`, failedDeployments, async (failure: FailedDeployment) => {
-            if (ENTITIES_TO_IGNORE.includes(failure.deployment.entityId)) {
-                await log(`Ignoring ${failure.deployment.entityId} on ${server}`)
+            if (ENTITIES_TO_IGNORE.includes(failure.entityId)) {
+                await log(`Ignoring ${failure.entityId} on ${server}`)
             } else {
                 const fixed = await fixFailure(otherServers, server, failure)
                 if (fixed) {
@@ -76,12 +76,12 @@ async function runCheck(serverAddresses: ServerAddress[]) {
 }
 
 async function fixFailure(allServers: ServerAddress[], serverWithFailure: ServerAddress, failedDeployment: FailedDeployment): Promise<boolean> {
-    const { deployment } = failedDeployment
+    const { entityType, entityId } = failedDeployment
 
-    const deploymentData = await downloadDeployment(allServers, deployment.entityType, deployment.entityId)
+    const deploymentData = await downloadDeployment(allServers, entityType, entityId)
 
     // Deploy the entity
-    await log(`Deploying entity (${deployment.entityType}, ${deployment.entityId}) on ${serverWithFailure}`)
+    await log(`Deploying entity (${entityType}, ${entityId}) on ${serverWithFailure}`)
     return deploy(serverWithFailure, deploymentData, true)
 }
 

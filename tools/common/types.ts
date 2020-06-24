@@ -21,7 +21,8 @@ export type AuditInfo = {
 }
 
 export type FailedDeployment = {
-    deployment: DeploymentEvent,
+    entityId: EntityId,
+    entityType: EntityType,
     reason: string,
     moment: Timestamp,
 }
