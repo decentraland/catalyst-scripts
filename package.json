@@ -26,6 +26,7 @@
     "@types/node-fetch": "^2.5.4",
     "@types/tiny-async-pool": "^1.0.0",
     "argparse": "^1.0.10",
+    "aws-sdk": "^2.693.0",
     "cli-progress": "^3.5.0",
     "eth-crypto": "^1.5.2",
     "form-data": "^3.0.0",
