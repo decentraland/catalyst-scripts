@@ -13,16 +13,16 @@ async function run() {
     const bucketKeys: string[] = await retrieveAllBucketKeys()
     console.log(`Total bucket keys: ${bucketKeys.length}`)
 
-    const allGltf: Map<EntityId, string[]> = await getAllGltfsByScene()
-    console.log(`Total scenes: ${allGltf.size}`)
+    const scenesData: SceneData[] = await getScenesData()
+    console.log(`Total scenes: ${scenesData.length}`)
 
     console.log("Finding scenes with missing hashes...")
     const scenesWithMissingHashes: EntityId[] = []
-    allGltf.forEach((gltfHashes: string[], sceneId: EntityId) => {
-        const missingHashes = gltfHashes.filter(hash => !bucketKeys.includes(hash))
+    scenesData.forEach(sceneData => {
+        const missingHashes = sceneData.gltfs.filter(hash => !bucketKeys.includes(hash))
         if (missingHashes.length > 0) {
-            logSceneAndMissingHashes(sceneId, missingHashes)
-            scenesWithMissingHashes.push(sceneId)
+            logSceneAndMissingHashes(sceneData, missingHashes)
+            scenesWithMissingHashes.push(sceneData.id)
         }
     });
     console.log(`Scenes with missing hashes: ${scenesWithMissingHashes.length}`)
@@ -45,8 +45,8 @@ async function run() {
     console.log("Done.")
 }
 
-function logSceneAndMissingHashes(sceneId: string, missingHashes: string[]) {
-    console.log(sceneId)
+function logSceneAndMissingHashes(sceneData: SceneData, missingHashes: string[]) {
+    console.log(`${sceneData.id} [${sceneData.pointers}]`)
     missingHashes.forEach(hash => {
         console.log("   " + hash)
     })
@@ -75,89 +75,47 @@ async function sendSqsMessage(sqsClient: AWS.SQS, sqsQueueUrl: string, sceneId: 
     })
 }
 
-async function getAllGltfsBySceneOld(): Promise<Map<EntityId, string[]>> {
-    return localCache<Map<EntityId, string[]>>(async () => {
-            var gltfsByScene: Map<EntityId, string[]> = new Map()
-
-            const xStart = -150
-            const xEnd   =  150
-            const xStep  =    5
-
-            const yStart = -150
-            const yEnd   =  150
-            const yStep  =    5
-
-            const pointerBatches: Pointer[][] = []
-            console.log("Creating pointers...")
-            for(var xBlockStart=xStart; xBlockStart<xEnd+1; xBlockStart+=xStep) {
-                for(var yBlockStart=yStart; yBlockStart<yEnd+1; yBlockStart+=yStep) {
-                    var pointers: Pointer[] = []
-                    for(var x=xBlockStart; x<Math.min(xBlockStart+xStep, xEnd+1); x++) {
-                        for(var y=yBlockStart; y<Math.min(yBlockStart+yStep, yEnd+1); y++) {
-                            pointers.push(`${x},${y}`)
-                        }
-                    }
-                    pointerBatches.push(pointers)
-                }
-            }
-            console.log(`Pointers done. Calculated ${pointerBatches.length} batches.`)
-
-            console.log("Retrieving scenes info...")
-            await Promise.all(pointerBatches.map(async pointers => {
-                const entities: Entity[] = await getEntityFromPointers('https://peer.decentraland.org/content', 'scene', pointers)
-                entities.forEach(entity => {
-                    if (entity.content) {
-                        const gltfs: string[] = entity.content.filter(item => isGltf(item.file)).map(item => item.hash)
-                        gltfsByScene.set(entity.id, gltfs)
-                    }
-                })
-                console.log(gltfsByScene.size)
-            }))
-            console.log(`Scenes info retrieved. Retrieved ${gltfsByScene.size} scenes.`)
-            return gltfsByScene
-        },
-        "all-gltfs-by-scene.json",
-        (str) => new Map(JSON.parse(str)),
-        (map) => JSON.stringify(Array.from(map))
-    )
-}
-
 type DeployedEntity = {
     entityId: string,
+    pointers: string[],
     content : {
         key: string,
         hash: string,
     }[]
 }
 
-async function getAllGltfsByScene(): Promise<Map<EntityId, string[]>> {
-    return localCache<Map<EntityId, string[]>>(async () => {
+type SceneData = {
+    id: string,
+    pointers: string[],
+    gltfs: string[]
+
+}
+async function getScenesData(): Promise<SceneData[]> {
+    return localCache<SceneData[]>(async () => {
             const batchStart = 0
             const batchEnd   = 25000
             const batchStep  = 500
             const batchArray = [...Array((batchEnd-batchStart)/batchStep).keys()]
-            var gltfsByScene: Map<EntityId, string[]> = new Map()
+            var scenesData: SceneData[] = []
 
             console.log("Retrieving scenes info...")
             await Promise.all(batchArray.map(async batchItem => {
                 const offset = batchItem * batchStep
                 const deploymentsResponse = await fetchJson('https://peer.decentraland.org/content', `/deployments?entityType=scene&onlyCurrentlyPointed=true&offset=${offset}`)
                 const entities: DeployedEntity[] = deploymentsResponse.deployments
-                entities.forEach(entity => {
-                    if (entity.content) {
-                        const gltfs: string[] = entity.content.filter(item => isGltf(item.key)).map(item => item.hash)
-                        gltfsByScene.set(entity.entityId, gltfs)
-                    }
-                })
-                console.log(gltfsByScene.size)
+                const partialScenesData: SceneData[] = entities
+                    .filter(entity => entity.content)
+                    .map(entity => { return {
+                        id: entity.entityId,
+                        pointers: entity.pointers,
+                        gltfs: entity.content.filter(item => isGltf(item.key)).map(item => item.hash)
+                    }})
+                scenesData.push(...partialScenesData)
+                console.log(scenesData.length)
             }))
-            console.log(`Scenes info retrieved. Retrieved ${gltfsByScene.size} scenes.`)
-            return gltfsByScene
-        },
-        "all-gltfs-by-scene.json",
-        (str) => new Map(JSON.parse(str)),
-        (map) => JSON.stringify(Array.from(map))
-    )
+            console.log(`Scenes info retrieved. Retrieved ${scenesData.length} scenes.`)
+            return scenesData
+        }, "scenes-data.json")
 }
 
 function isGltf(file:String): boolean {
