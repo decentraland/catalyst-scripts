@@ -2,6 +2,12 @@ import { fetchJson, getEntityFromPointers } from './common/Requests';
 import { Entity, Pointer, EntityId } from './common/types';
 import AWS from 'aws-sdk'
 import * as fs from 'fs';
+import {createCanvas} from 'canvas';
+
+const RED_COMPONENT   = 0
+const GREEN_COMPONENT = 1
+const BLUE_COMPONENT  = 2
+const ALPHA_COMPONENT = 3
 
 async function run() {
     const accessKey   = process.env.SQS_ACCESS_KEY ?? ''
@@ -16,16 +22,44 @@ async function run() {
     const scenesData: SceneData[] = await getScenesData()
     console.log(`Total scenes: ${scenesData.length}`)
 
+    const margin = 10
+    const minPos = -150
+    const maxPos = 150
+    const worldSize = maxPos - minPos
+    const canvasSize = 2 * margin + worldSize
+    const canvas = createCanvas(canvasSize, canvasSize)
+    const context = canvas.getContext('2d')
+
+    context.fillStyle = '#ccc'
+    context.fillRect(0, 0, canvasSize, canvasSize)
+
+    context.fillStyle = '#fff'
+    context.fillRect(margin, margin, worldSize, worldSize)
+
     console.log("Finding scenes with missing hashes...")
     const scenesWithMissingHashes: EntityId[] = []
     scenesData.forEach(sceneData => {
         const missingHashes = sceneData.gltfs.filter(hash => !bucketKeys.includes(hash))
+        const pixel = context.createImageData(1,1)
+        pixel.data[ALPHA_COMPONENT] = 255
         if (missingHashes.length > 0) {
             logSceneAndMissingHashes(sceneData, missingHashes)
             scenesWithMissingHashes.push(sceneData.id)
+            pixel.data[RED_COMPONENT] = 10 * missingHashes.length;
+        } else {
+            pixel.data[GREEN_COMPONENT] = 100;
         }
+        sceneData.pointers.forEach(pointer => {
+            const [px,py] = pointer.split(',')
+            const x = margin + parseInt(px) - minPos
+            const y = margin + parseInt(py) - minPos
+            context.putImageData( pixel, x, y );
+        })
     });
     console.log(`Scenes with missing hashes: ${scenesWithMissingHashes.length}`)
+
+    const buffer = canvas.toBuffer('image/png')
+    fs.writeFileSync('./image.png', buffer)
 
     if (enqueueScenes) {
         console.log("Sending those scenes to the migrator...")

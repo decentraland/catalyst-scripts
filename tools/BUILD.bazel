@@ -107,5 +107,6 @@ ts_library(
         "@npm//@types/ms",
         "@npm//eth-crypto",
         "@npm//aws-sdk",
+        "@npm//canvas",
     ],
 )
