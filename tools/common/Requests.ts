@@ -34,8 +34,7 @@ export async function isContentAvailable(serverAddress: ServerAddress, fileHashe
     return executeWithRetries(async () => {
         const result: { cid: FileHash, available: boolean }[] = await fetchJson(serverAddress, '/available-content?' + queryParam)
         const grouped: Map<FileHash, boolean> = new Map(result.map(({ cid, available }) => [cid, available]))
-        return { result: grouped, allAvailable: result.map(({ available }) => available)
-            .reduce((a, b) => a && b, true) }
+        return { result: grouped, allAvailable: result.every(({ available }) => available) }
     }, error)
 }
 

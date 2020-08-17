@@ -9,10 +9,18 @@ import asyncPool from "tiny-async-pool";
 
 async function run() {
     const parser = getGlobalArgParser()
+    parser.addArgument('--serverAddresses', { help: 'The addresses of the server we will perform the check. If not set, will check the DAO.', metavar: 'N', nargs: '+'});
     parser.addArgument('outputDir', { help: 'The name of the dir where we will store the files'});
     const args = parser.parseArgs();
     console.log("Starting run check")
-    const serverAddresses: ServerAddress[] = await DAOClient.getAllContentServers()
+    let serverAddresses: ServerAddress[]
+
+    if (args.serverAddresses) {
+        serverAddresses = args.serverAddresses
+    } else {
+        serverAddresses = await DAOClient.getAllContentServers()
+    }
+
     const outputDir = args.outputDir.endsWith("/") ? args.outputDir : (args.outputDir !== "" ? args.outputDir + '/' : "")
 
     // Date to start checking history

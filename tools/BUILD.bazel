@@ -86,6 +86,16 @@ nodejs_binary(
     entry_point = "asset-bundle-analysis.ts",
 )
 
+nodejs_binary(
+    name = "file-availability",
+    data = [
+        "tools",
+        "@npm//@bazel/typescript",
+        "@npm//typescript",
+    ],
+    entry_point = "check-file-availability.ts",
+)
+
 ts_library(
     name = "tools",
     srcs = glob(["**/*.ts"]),
@@ -108,5 +118,6 @@ ts_library(
         "@npm//eth-crypto",
         "@npm//aws-sdk",
         "@npm//canvas",
+        "@npm//dcl-catalyst-client",
     ],
 )
