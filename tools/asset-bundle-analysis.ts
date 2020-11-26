@@ -29,6 +29,7 @@ async function run() {
     const canvasSize = 2 * margin + worldSize
     const canvas = createCanvas(canvasSize, canvasSize)
     const context = canvas.getContext('2d')
+    let areas = ''
 
     context.fillStyle = '#ccc'
     context.fillRect(0, 0, canvasSize, canvasSize)
@@ -54,12 +55,23 @@ async function run() {
             const x = margin + parseInt(px) - minPos
             const y = margin + parseInt(py) - minPos
             context.putImageData( pixel, x, y );
+            if (missingHashes.length > 0) {
+                areas += `<area shape="rect" coords="${x},${y},${x+1},${y+1}" href="https://peer.decentraland.org/content/entities/scene?pointer=${pointer}">\n`
+            }
         })
     });
     console.log(`Scenes with missing hashes: ${scenesWithMissingHashes.length}`)
 
+    const htmlContainer = `
+        <img src="image.png" alt="dcl" usemap="#dclmap" width="${canvasSize}" height="${canvasSize}">
+        <map name='dclmap'>
+            ${areas}
+        </map>
+    `
+
     const buffer = canvas.toBuffer('image/png')
     fs.writeFileSync('./image.png', buffer)
+    fs.writeFileSync('./index.html', htmlContainer)
 
     if (enqueueScenes) {
         console.log("Sending those scenes to the migrator...")
