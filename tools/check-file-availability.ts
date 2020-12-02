@@ -39,7 +39,7 @@ async function runCheck(serverAddresses: ServerAddress[]) {
 
         // Collect all hashes
         const client = new ContentClient(server, 'test')
-        const deployments = await client.fetchAllDeployments({ onlyCurrentlyPointed: true }, DeploymentFields.POINTERS_CONTENT_METADATA_AND_AUDIT_INFO)
+        const deployments = await client.fetchAllDeployments({ filters: { onlyCurrentlyPointed: true }, fields: DeploymentFields.POINTERS_CONTENT_METADATA_AND_AUDIT_INFO })
         deployments.forEach(deployment => {
             if (deployment.content) {
                 deployment.content.forEach(({ hash }) => {

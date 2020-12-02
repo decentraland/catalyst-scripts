@@ -50,6 +50,22 @@ export async function getContentFile(serverAddress: ServerAddress, fileHash: Fil
     }, error, retries)
 }
 
+export async function getSnapshot(serverAddress: ServerAddress, entityType: EntityType, retries?: number): Promise<{ snapshot: Map<EntityId, Pointer[]>, lastIncludedDeploymentTimestamp: number}> {
+    let error = `Got an error fetching the snapshot for type '${entityType}' from server ${serverAddress}`
+    const { hash, lastIncludedDeploymentTimestamp } = await executeWithRetries(async () => {
+        const response = await fetch(serverAddress + '/snapshot/' + entityType)
+        if (response.ok) {
+            return response.json();
+        } else {
+            throw new Error(`Got status ${response.status}`)
+        }
+    }, error, retries)
+
+    const file = await getContentFile(serverAddress, hash, retries)
+    const snapshot: Map<EntityId, Pointer[]> = new Map(JSON.parse(file.toString()))
+    return { snapshot, lastIncludedDeploymentTimestamp }
+}
+
 export async function isServerUp(serverAddress: ServerAddress) {
     try {
         await fetchJson(serverAddress, '/status')

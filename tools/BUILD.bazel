@@ -96,6 +96,16 @@ nodejs_binary(
     entry_point = "check-file-availability.ts",
 )
 
+nodejs_binary(
+    name = "calculate-use-by-scenes",
+    data = [
+        "tools",
+        "@npm//@bazel/typescript",
+        "@npm//typescript",
+    ],
+    entry_point = "calculate-use-by-scenes.ts",
+)
+
 ts_library(
     name = "tools",
     srcs = glob(["**/*.ts"]),
@@ -119,5 +129,6 @@ ts_library(
         "@npm//aws-sdk",
         "@npm//canvas",
         "@npm//dcl-catalyst-client",
+        "@npm//dcl-catalyst-commons"
     ],
 )
