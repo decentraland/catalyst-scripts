@@ -20,7 +20,7 @@ async function run() {
 
 async function executeBlacklisting(serverAddress: ServerAddress, target: DenylistTarget, identity: Identity) {
     const timestamp = Date.now()
-    const signature = hashAndSignMessage(`${target.asString()}${timestamp}`, identity)
+    const signature = hashAndSignMessage(`block-${target.asString()}-${timestamp}`, identity)
 
     const body = {
         "timestamp": timestamp,
