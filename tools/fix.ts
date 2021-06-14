@@ -18,11 +18,18 @@ async function run() {
         serverAddresses = args.serverAddresses
     } else {
         serverAddresses = await DAOClient.getAllContentServers()
+
+        // For some reason these servers are blocking our requests
+        serverAddresses = serverAddresses.filter(server => server !== 'https://peer.decentral.games/content' && server !== 'https://peer.uadevops.com/content')
     }
 
     clearLogFiles()
     await log("Starting fixes check")
-    await runCheck(serverAddresses)
+    try {
+      await runCheck(serverAddresses)
+    } catch (error) {
+      console.trace(error)
+    }
 }
 
 async function runCheck(serverAddresses: ServerAddress[]) {
@@ -78,11 +85,14 @@ async function runCheck(serverAddresses: ServerAddress[]) {
 async function fixFailure(allServers: ServerAddress[], serverWithFailure: ServerAddress, failedDeployment: FailedDeployment): Promise<boolean> {
     const { entityType, entityId } = failedDeployment
 
-    const deploymentData = await downloadDeployment(allServers, entityType, entityId)
-
-    // Deploy the entity
-    await log(`Deploying entity (${entityType}, ${entityId}) on ${serverWithFailure}`)
-    return deploy(serverWithFailure, deploymentData, true)
+    try {
+      const deploymentData = await downloadDeployment(allServers, entityType, entityId)
+        // Deploy the entity
+      await log(`Deploying entity (${entityType}, ${entityId}) on ${serverWithFailure}`)
+      return deploy(serverWithFailure, deploymentData, true)
+    } catch {
+      return false
+    }
 }
 
 run().then(() => console.log("Done!"))
