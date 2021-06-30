@@ -1,0 +1,40 @@
+{
+  "name": "sync-check",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "@bazel/bazel": "latest",
+    "@bazel/buildifier": "latest",
+    "@bazel/ibazel": "latest",
+    "@bazel/karma": "^0.42.1",
+    "@bazel/rollup": "0.39.0",
+    "@bazel/typescript": "^0.39.0",
+    "@types/cors": "^2.8.6",
+    "@types/isomorphic-fetch": "^0.0.35",
+    "typescript": "^3.7.2",
+    "yargs": "^15.0.2"
+  },
+  "prettier": {
+    "printWidth": 180
+  },
+  "scripts": {},
+  "dependencies": {
+    "@types/argparse": "^1.0.38",
+    "@types/cli-progress": "^3.4.1",
+    "@types/form-data": "^2.5.0",
+    "@types/ms": "^0.7.31",
+    "@types/node-fetch": "^2.5.4",
+    "@types/tiny-async-pool": "^1.0.0",
+    "argparse": "^1.0.10",
+    "aws-sdk": "^2.693.0",
+    "canvas": "^2.6.1",
+    "cli-progress": "^3.5.0",
+    "dcl-catalyst-client": "^3.0.1",
+    "eth-crypto": "^1.5.2",
+    "form-data": "^3.0.0",
+    "ms": "^2.1.2",
+    "node-fetch": "^2.6.0",
+    "tiny-async-pool": "^1.1.0",
+    "web3x": "^4.0.6"
+  }
+}

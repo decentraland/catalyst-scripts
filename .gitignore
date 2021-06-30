@@ -4,7 +4,6 @@ dist
 bazel-out
 **/node_modules
 yarn-error.log
-**/package-lock.json
 **/.DS_Store
 **/log.txt
 **/failed.txt

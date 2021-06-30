@@ -1,37 +1,22 @@
 {
-  "bazelOpts": {
-    "es5Mode": true,
-    "devmodeTargetOverride": "es2017"
-  },
   "compilerOptions": {
-    "module": "esnext",
+    "strict": true,
+    "outDir": "dist",
     "target": "es2017",
-    "diagnostics": false,
-    "inlineSourceMap": false,
-    "inlineSources": false,
-    "sourceMap": true,
+    "module": "commonjs",
     "moduleResolution": "node",
-    "stripInternal": true,
-    "strictNullChecks": true,
-    "pretty": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "allowSyntheticDefaultImports": true,
+    "sourceMap": true,
     "experimentalDecorators": true,
-    "incremental": true,
-    "tsBuildInfoFile": ".tsbuildinfo",
-    "emitDecoratorMetadata": true,
-    "jsx": "react",
-    "plugins": [
-      {
-        "name": "tslint-language-service"
-      }
-    ],
-    "baseUrl": ".",
+    "esModuleInterop": true,
+    "pretty": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "forceConsistentCasingInFileNames": true,
     "lib": ["es2017", "dom", "esnext.asynciterable", "esnext"],
-    "paths": {
-        "decentraland-katalyst-contracts/*": ["contracts/*"],
-    }
   },
-  "exclude": ["node_modules", "bazel-*", "**/node_modules/*"]
+  "include": [
+    "src"
+  ]
 }

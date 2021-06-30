@@ -21,6 +21,7 @@ async function run() {
 
         // For some reason these servers are blocking our requests
         serverAddresses = serverAddresses.filter(server => server !== 'https://peer.decentral.games/content' && server !== 'https://peer.uadevops.com/content')
+        serverAddresses = serverAddresses.filter(server => server !== 'https://interconnected.online/content')
     }
 
     clearLogFiles()
@@ -28,6 +29,7 @@ async function run() {
     try {
       await runCheck(serverAddresses)
     } catch (error) {
+      console.log(error)
       console.trace(error)
     }
 }
