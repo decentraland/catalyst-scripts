@@ -36,8 +36,6 @@ async function run() {
   if (args.dryRun) {
     const contentAsJson = entity.content?.map(({file, hash}) => ({ key: file, hash })).sort(( a, b ) => a.hash > b.hash ? 1 : -1) ?? []
     const buffer = Buffer.from(JSON.stringify({ content: contentAsJson, metadata: entity.metadata }))
-    console.log(contentAsJson)
-    console.log(entity.metadata)
     const hash = await Hashing.calculateBufferHash(buffer)
     console.log(`Hash is ${hash}`)
   } else {
