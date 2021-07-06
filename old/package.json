@@ -33,7 +33,7 @@
     "eth-crypto": "^1.5.2",
     "form-data": "^3.0.0",
     "ms": "^2.1.2",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.1",
     "tiny-async-pool": "^1.1.0",
     "web3x": "^4.0.6"
   }
