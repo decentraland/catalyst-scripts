@@ -16,7 +16,7 @@ async function run() {
 
   let serverAddresses: ServerAddress[];
 
-  if (args.serverAddresses) {
+  if (args.catalystAddresses) {
     serverAddresses = args.catalystAddresses;
   } else {
     const client = await CatalystClient.connectedToCatalystIn("mainnet", "fix script");

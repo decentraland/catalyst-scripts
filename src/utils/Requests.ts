@@ -4,7 +4,7 @@ import {
   DeploymentData,
   DeploymentFields,
 } from "dcl-catalyst-client";
-import { ContentFile, Deployment, EntityId, fetchJson, ServerAddress } from "dcl-catalyst-commons";
+import { ContentFile, ContentFileHash, Deployment, EntityId, fetchJson, ServerAddress } from "dcl-catalyst-commons";
 import { FailedDeployment } from "../types";
 
 export function getFailedDeployments(serverAddress: ServerAddress): Promise<FailedDeployment[]> {
@@ -32,13 +32,18 @@ export async function downloadDeployment(
   const hashes = deployment.content ? [entityId, ...deployment.content.map(({ hash }) => hash)] : [entityId]
 
   // Download all entity's files
-  const files: Map<string, ContentFile> = new Map();
+  const downloadedFiles: Map<ContentFileHash, Buffer> = await downloadAllFiles(allServers, hashes)
+  const files: Map<ContentFileHash, ContentFile> = new Map([...downloadedFiles].map(([hash, buffer])=> [hash, { name: hash, content: buffer }]))
+  return { entityId, authChain: deployment.auditInfo.authChain, files };
+}
+
+export async function downloadAllFiles(allServers: ServerAddress[], hashes: ContentFileHash[]): Promise<Map<string, Buffer>> {
+  const files: Map<string, Buffer> = new Map();
   for (const hash of hashes) {
     const buffer = await tryOnMany(allServers, (server) => server.downloadContent(hash));
-    files.set(hash, { name: hash, content: buffer});
+    files.set(hash, buffer)
   }
-
-  return { entityId, authChain: deployment.auditInfo.authChain, files };
+  return files
 }
 
 export async function tryOnMany<T>(
