@@ -1,4 +1,4 @@
-import { CatalystClient } from "dcl-catalyst-client";
+import { CatalystClient, ContentAPI } from "dcl-catalyst-client";
 import { ServerAddress } from "dcl-catalyst-commons";
 import { ArgumentParser } from "argparse";
 import { downloadDeployment, getFailedDeployments } from "./utils/Requests";
@@ -23,35 +23,35 @@ async function run() {
     const catalysts = await client.fetchCatalystsApprovedByDAO();
     serverAddresses = catalysts.map(({ address }) => address);
   }
-  serverAddresses = serverAddresses.map(catalyst => `${catalyst}/content`)
+  const servers: ContentAPI[] = serverAddresses.map(address => new CatalystClient(address, 'fix script'))
 
   try {
-    await runCheck(serverAddresses);
+    await runCheck(servers);
   } catch (error) {
     console.log(error);
   }
 }
 
-async function runCheck(serverAddresses: ServerAddress[]) {
+async function runCheck(contentClients: ContentAPI[]) {
   // Check if there are any failed deployments
   const serverRequests = await Promise.all(
-    serverAddresses.map<Promise<[ServerAddress, FailedDeployment[]] | undefined>>(
-      async (address) => {
+    contentClients.map<Promise<[ContentAPI, FailedDeployment[]] | undefined>>(
+      async (contentClient) => {
         try {
-          return [address, await getFailedDeployments(address)];
+          return [contentClient, await getFailedDeployments(contentClient.getContentUrl())];
         } catch {
-          console.log(`Failed to find failed deployments for ${address}. Will ignore that server.`);
+          console.log(`Failed to find failed deployments for ${contentClient.getContentUrl()}. Will ignore that server.`);
           return undefined;
         }
       }
     )
   );
-  const servers: [ServerAddress, FailedDeployment[]][] = serverRequests.filter(
-    (_): _ is [ServerAddress, FailedDeployment[]] => !!_
+  const servers: [ContentAPI, FailedDeployment[]][] = serverRequests.filter(
+    (_): _ is [ContentAPI, FailedDeployment[]] => !!_
   );
 
   // Keep only servers with failures
-  const serversWithFailures: Map<ServerAddress, FailedDeployment[]> = new Map(
+  const serversWithFailures: Map<ContentAPI, FailedDeployment[]> = new Map(
     servers.filter(([, failures]) => failures.length > 0)
   );
 
@@ -62,7 +62,7 @@ async function runCheck(serverAddresses: ServerAddress[]) {
   }
 
   console.log(
-    `The following servers have failures:\n${Array.from(serversWithFailures.keys()).join("\n")}`
+    `The following servers have failures:\n${Array.from(serversWithFailures.keys()).map(_ => _.getContentUrl()).join("\n")}`
   );
 
   let totalFixed = 0;
@@ -71,11 +71,11 @@ async function runCheck(serverAddresses: ServerAddress[]) {
   for (const [server, failedDeployments] of serversWithFailures) {
     let fixedForServer = 0;
 
-    const otherServers = serverAddresses.slice();
-    otherServers.splice(otherServers.indexOf(server), 1);
+    const otherServers = contentClients.slice();
+    otherServers.splice(otherServers.findIndex(otherServer => otherServer.getContentUrl() === server.getContentUrl()), 1);
 
     await executeWithProgressBar(
-      `Fixing server ${server}`,
+      `Fixing server ${server.getContentUrl()}`,
       failedDeployments,
       async (failure: FailedDeployment) => {
         const fixed = await fixFailure(otherServers, server, failure);
@@ -87,12 +87,12 @@ async function runCheck(serverAddresses: ServerAddress[]) {
     );
 
     if (fixedForServer === 0) {
-      console.log(`Couldn't fix any of deployments. Errors are on the 'failed' file.`);
+      console.log(`Couldn't fix any of deployments.`);
     } else if (fixedForServer === failedDeployments.length) {
       console.log(`Could fix all the ${fixedForServer} failed deployments.`);
     } else {
       console.log(
-        `Could fix ${fixedForServer}/${failedDeployments.length} of failed deployments. Errors are on the 'failed' file.`
+        `Could fix ${fixedForServer}/${failedDeployments.length} of failed deployments`
       );
     }
 
@@ -104,17 +104,16 @@ async function runCheck(serverAddresses: ServerAddress[]) {
 }
 
 async function fixFailure(
-  allServers: ServerAddress[],
-  serverWithFailure: ServerAddress,
+  allServers: ContentAPI[],
+  serverWithFailure: ContentAPI,
   failedDeployment: FailedDeployment
 ): Promise<boolean> {
-  const { entityType, entityId } = failedDeployment;
+  const { entityId } = failedDeployment;
 
   try {
     const deploymentData = await downloadDeployment(allServers, entityId);
     // Deploy the entity
-    const client = new CatalystClient(serverWithFailure, "");
-    await client.deployEntity(deploymentData, true);
+    await serverWithFailure.deployEntity(deploymentData, true);
     return true;
   } catch {
     return false;

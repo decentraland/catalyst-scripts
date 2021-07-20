@@ -1,6 +1,5 @@
-import { assert } from "console";
 import {
-  CatalystClient,
+  ContentAPI,
   DeploymentData,
   DeploymentFields,
 } from "dcl-catalyst-client";
@@ -12,7 +11,7 @@ export function getFailedDeployments(serverAddress: ServerAddress): Promise<Fail
 }
 
 export async function downloadDeployment(
-  allServers: ServerAddress[],
+  allServers: ContentAPI[],
   entityId: EntityId
 ): Promise<DeploymentData> {
   // Get the deployment
@@ -37,7 +36,7 @@ export async function downloadDeployment(
   return { entityId, authChain: deployment.auditInfo.authChain, files };
 }
 
-export async function downloadAllFiles(allServers: ServerAddress[], hashes: ContentFileHash[]): Promise<Map<string, Buffer>> {
+export async function downloadAllFiles(allServers: ContentAPI[], hashes: ContentFileHash[]): Promise<Map<string, Buffer>> {
   const files: Map<string, Buffer> = new Map();
   for (const hash of hashes) {
     const buffer = await tryOnMany(allServers, (server) => server.downloadContent(hash));
@@ -47,12 +46,12 @@ export async function downloadAllFiles(allServers: ServerAddress[], hashes: Cont
 }
 
 export async function tryOnMany<T>(
-  serverAddresses: ServerAddress[],
-  action: (server: CatalystClient) => Promise<T>
+  servers: ContentAPI[],
+  action: (server: ContentAPI) => Promise<T>
 ): Promise<T> {
-  for (const serverAddress of serverAddresses) {
+  for (const server of servers) {
     try {
-      return await action(new CatalystClient(serverAddress, "catalyst-scripts"));
+      return await action(server);
     } catch {}
   }
   throw new Error(`Failed to execute on all servers`);
