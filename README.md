@@ -1,3 +1,7 @@
+# Deprecated
+
+Please don't add functionality here!
+
 # Catalyst Scripts
 
 This repository is a collection of scripts that are useful in some way regarding catalysts. This can scripts can verify if some condition is true or not, or they might execute a specific action.
