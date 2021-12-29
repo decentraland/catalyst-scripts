@@ -19,11 +19,21 @@ async function run() {
   if (args.catalystAddresses) {
     serverAddresses = args.catalystAddresses;
   } else {
-    const client = await CatalystClient.connectedToCatalystIn("mainnet", "fix script");
-    const catalysts = await client.fetchCatalystsApprovedByDAO();
-    serverAddresses = catalysts.map(({ address }) => address);
+    serverAddresses = [
+        "https://peer.decentraland.org",
+        "https://peer-ec1.decentraland.org",
+        "https://peer-wc1.decentraland.org",
+        "https://peer-eu1.decentraland.org",
+        "https://peer-ap1.decentraland.org",
+        "https://interconnected.online",
+        "https://peer.decentral.games",
+        "https://peer.melonwave.com",
+        "https://peer.kyllian.me",
+        "https://peer.uadevops.com",
+        "https://peer.dclnodes.io",
+      ]
   }
-  const servers: ContentAPI[] = serverAddresses.map(address => new CatalystClient(address, 'fix script'))
+  const servers: ContentAPI[] = serverAddresses.map(address => new CatalystClient({ catalystUrl: address }))
 
   try {
     await runCheck(servers);
